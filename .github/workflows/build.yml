@@ -5,36 +5,46 @@ on:
     tags:
       - 'v*'
 jobs:
-  createrelease:
-    name: Create Release
-    runs-on: ubuntu-latest
-    outputs:
-      release_url: ${{ steps.create-release.outputs.upload_url }}
-    steps:
-    - name: Create Release
-      id: create-release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
+  # createrelease:
+  #   name: Create Release
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     release_url: ${{ steps.create-release.outputs.upload_url }}
+  #   steps:
+  #   - name: Create Release
+  #     id: create-release
+  #     uses: actions/create-release@v1
+  #     env:
+  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     with:
+  #       tag_name: ${{ github.ref }}
+  #       release_name: Release ${{ github.ref }}
+  #       draft: false
+  #       prerelease: false
   build:
     name: Build packages
-    needs: createrelease
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+        - os: ubuntu-latest
+          TARGET: linux
+          CMD_BUILD: >
+              echo "build" >> "build"
+              zip -9 audible_linux_ubuntu_latest build
+          OUT_FILE_NAME: audible_linux_ubuntu_latest.zip
+        - os: ubuntu-20.04
+          TARGET: linux
+          CMD_BUILD: >
+              echo "build" >> "build"
+              zip -9 audible_linux_ubuntu_20_04 build
+          OUT_FILE_NAME: audible_linux_ubuntu_20_04.zip
+     
     steps:
-    - name: Build
-      run: |
-        echo "build" >> "build"
+    - name: Build for ${{matrix.TARGET}}
+      run: ${{matrix.CMD_BUILD}}
     - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
       with:
-        upload_url: ${{ needs.createrelease.outputs.release_url }}
-        asset_path: ./build
-        asset_name: "build"
+        files: ${{matrix.OUT_FILE_NAME}}
