@@ -24,18 +24,20 @@ jobs:
   build:
     name: Build packages
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     strategy:
       matrix:
         include:
         - os: ubuntu-latest
           TARGET: linux
-          CMD_BUILD: >
+          CMD_BUILD: |
               echo "build" >> "build"
               zip -9 audible_linux_ubuntu_latest build
           OUT_FILE_NAME: audible_linux_ubuntu_latest.zip
         - os: ubuntu-20.04
           TARGET: linux
-          CMD_BUILD: >
+          CMD_BUILD: |
               echo "build" >> "build"
               zip -9 audible_linux_ubuntu_20_04 build
           OUT_FILE_NAME: audible_linux_ubuntu_20_04.zip
